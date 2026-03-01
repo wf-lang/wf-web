@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wildfire Web Interpreter</title>
+<style>
+body { background-color: #1e1e1e; color: #d4d4d4; font-family: sans-serif; padding: 20px; }
+textarea { width: 100%; height: 300px; background-color: #2d2d2d; color: #d4d4d4; font-family: monospace; font-size: 16px; border: 1px solid #444; padding: 10px; }
+button { background-color: #ff5555; color: white; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+button:hover { background-color: #ff3333; }
+pre { background-color: #000; color: #00ff00; padding: 15px; min-height: 50px; font-family: monospace; font-size: 16px; border-left: 5px solid #ff5555; white-space: pre-wrap; }
+</style>
+<link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+<script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+</head>
+<body>
+<h1>wildfire web interpreter</h1>
+<textarea id="code">
+@TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTv
+vTTT.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT<
+>TTTTTTTTTTTTTTTTTTTTTTTTTT.TTTTTTT..TTv
+vtttttttttttttttttttttttttttttttttttt.T<
+>ttttttttttttttttttttttttttttttttttttttv
+vTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.ttttt<
+>TTTTTTTTTTTTTTTTTTTTTTT.TTTTTTTTTTTTTTv
+vttttttt.tttttttt.tttttt.TTT.TTTTTTTTTT<
+>ttttttttttttttttttttttttttttttttttttttv
+               P.tttttttttttttttttttttt<
+</textarea>
+<br>
+<button py-click="run_code">run</button>
+<h2>Output:</h2>
+<pre id="output"></pre>
+<script type="py">
+from pyscript import document
+
+def exec(src):
+    grid = []
+    for line in src.split('\n'):
+        line = line.strip('\r')
+        if '#' in line:
+            line = line[:line.index('#')]
+        grid.append(list(line))
+    height = len(grid)
+    width = max((len(row) for row in grid), default=0)
+    out_str = ""
+    if width == 0:
+        return out_str, ""
+    for i in range(height):
+        grid[i].extend([' '] * (width - len(grid[i])))
+    start_x, start_y = -1, -1
+    has_plant_command = False
+    for y in range(height):
+        for x in range(width):
+            if grid[y][x] == '@':
+                start_x, start_y = x, y
+            if grid[y][x] == 'P':
+                has_plant_command = True
+    if start_x == -1:
+        return "", "Error: Starting point '@' not found.\n"
+    if not has_plant_command:
+        return "", "Error: Rule Violation. No 'P' command found in source. Execution denied.\n"
+    memory = [0] * 30000
+    pointer = 0
+    dx, dy = 1, 0
+    x, y = start_x, start_y
+    has_planted_at_runtime = False
+    while 0 <= x < width and 0 <= y < height:
+        char = grid[y][x]
+        if char == ' ':
+            break
+        grid[y][x] = ' '
+        if char == 'T':
+            memory[pointer] = (memory[pointer] + 1) % 256
+        elif char == 't':
+            memory[pointer] = (memory[pointer] - 1) % 256
+        elif char == '}':
+            pointer += 1
+        elif char == '{':
+            pointer = max(0, pointer - 1)
+        elif char == '>':
+            dx, dy = 1, 0
+        elif char == '<':
+            dx, dy = -1, 0
+        elif char == '^':
+            dx, dy = 0, -1
+        elif char == 'v':
+            dx, dy = 0, 1
+        elif char == '.':
+            out_str += chr(memory[pointer])
+        elif char == ',':
+            memory[pointer] = 0
+        elif char == '?':
+            if memory[pointer] == 0:
+                x += dx
+                y += dy
+        elif char == 'P':
+            has_planted_at_runtime = True
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < width and 0 <= ny < height:
+                grid[ny][nx] = chr(memory[pointer])
+        x += dx
+        y += dy
+    if not has_planted_at_runtime:
+        return out_str, "\nError: Rule Violation. The 'P' command was not executed during runtime. Forest died.\n"
+    return out_str, ""
+
+def run_code(event):
+    code = document.getElementById("code").value
+    output_element = document.getElementById("output")
+    out, err = exec(code)
+    if err:
+        output_element.innerText = out + err
+    else:
+        output_element.innerText = out
+</script>
+</body>
+</html>
