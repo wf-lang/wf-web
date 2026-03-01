@@ -257,7 +257,7 @@
 
     <div class="editor-wrapper">
         <textarea id="code" spellcheck="false">
-# Hello world from examples/helloworld.wf
+# Hello World! from examples/helloworld.wf
 @TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTv
 vTTT.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT<
 >TTTTTTTTTTTTTTTTTTTTTTTTTT.TTTTTTT..TTv
@@ -267,7 +267,7 @@ vTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.ttttt<
 >TTTTTTTTTTTTTTTTTTTTTTT.TTTTTTTTTTTTTTv
 vttttttt.tttttttt.tttttt.TTT.TTTTTTTTTT<
 >ttttttttttttttttttttttttttttttttttttttv
-                P.tttttttttttttttttttttt<
+               P.tttttttttttttttttttttt<
 </textarea>
         <div class="controls">
             <div class="file-input-wrapper">
@@ -353,7 +353,8 @@ def exec(src):
         elif char == '.':
             out_str += chr(memory[pointer])
         elif char == ',':
-            memory[pointer] = 0
+            val = window.prompt("Input a character:")
+            memory[pointer] = ord(val[0]) if val else 0
         elif char == '?':
             if memory[pointer] == 0:
                 x += dx
@@ -372,6 +373,7 @@ def exec(src):
 def run_code(event):
     code = document.getElementById("code").value
     output_element = document.getElementById("output")
+    output_element.innerText = ""
     out, err = exec(code)
     if err:
         output_element.innerText = out + err
