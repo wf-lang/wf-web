@@ -1,21 +1,263 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>Wildfire Web Interpreter</title>
-<style>
-body { background-color: #1e1e1e; color: #d4d4d4; font-family: sans-serif; padding: 20px; }
-textarea { width: 100%; height: 300px; background-color: #2d2d2d; color: #d4d4d4; font-family: monospace; font-size: 16px; border: 1px solid #444; padding: 10px; }
-button { background-color: #ff5555; color: white; border: none; padding: 10px 20px; font-size: 18px; cursor: pointer; margin-top: 10px; font-weight: bold; }
-button:hover { background-color: #ff3333; }
-pre { background-color: #000; color: #00ff00; padding: 15px; min-height: 50px; font-family: monospace; font-size: 16px; border-left: 5px solid #ff5555; white-space: pre-wrap; }
-</style>
-<link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
-<script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire Web Interpreter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0a0c10;
+            --container-bg: #12151c;
+            --text-main: #e6edf3;
+            --text-muted: #8b949e;
+            --accent: #ff5c5c;
+            --accent-glow: rgba(255, 92, 92, 0.4);
+            --border-color: #30363d;
+            --code-bg: #010409;
+            --success: #39ff14;
+            --upload-btn: #238636;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 50% -20%, #1d212b, var(--bg-color));
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            padding: 60px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent);
+            font-size: 2.8rem;
+            margin: 0;
+            letter-spacing: -2px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-top: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .editor-wrapper {
+            background: var(--container-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 5px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            background-color: transparent;
+            color: #d1d5db;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            line-height: 1.5;
+            border: none;
+            padding: 20px;
+            box-sizing: border-box;
+            resize: vertical;
+            outline: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            gap: 15px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .btn-upload {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-upload:hover {
+            border-color: var(--text-muted);
+            color: var(--text-main);
+        }
+
+        button.btn-fire {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        button.btn-fire:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+            filter: brightness(1.1);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .output-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 40px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .output-header::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--success);
+            padding: 25px;
+            min-height: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        pre::before {
+            content: "CONSOLE";
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 10px;
+            padding: 4px 8px;
+            background: var(--border-color);
+            color: var(--text-muted);
+            border-bottom-left-radius: 8px;
+        }
+
+        footer {
+            margin-top: auto;
+            width: 100%;
+            background: rgba(18, 21, 28, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 50px 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .github-card {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            background: #1c2128;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: border-color 0.3s;
+        }
+
+        .github-card:hover {
+            border-color: var(--accent);
+        }
+
+        .github-card svg {
+            margin-bottom: 12px;
+            fill: var(--text-main);
+        }
+
+        .github-card span {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .info-text {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+    </style>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
 </head>
 <body>
-<h1>wildfire web interpreter</h1>
-<textarea id="code">
+
+<div class="container">
+    <header>
+        <h1>wildfire</h1>
+        <div class="subtitle">interpret ?? ?? ?? ??</div>
+    </header>
+
+    <div class="editor-wrapper">
+        <textarea id="code" spellcheck="false">
+# Hello world from examples/helloworld.wf
 @TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTv
 vTTT.TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT<
 >TTTTTTTTTTTTTTTTTTTTTTTTTT.TTTTTTT..TTv
@@ -25,14 +267,36 @@ vTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT.ttttt<
 >TTTTTTTTTTTTTTTTTTTTTTT.TTTTTTTTTTTTTTv
 vttttttt.tttttttt.tttttt.TTT.TTTTTTTTTT<
 >ttttttttttttttttttttttttttttttttttttttv
-               P.tttttttttttttttttttttt<
+                P.tttttttttttttttttttttt<
 </textarea>
-<br>
-<button py-click="run_code">run</button>
-<h2>Output:</h2>
-<pre id="output"></pre>
+        <div class="controls">
+            <div class="file-input-wrapper">
+                <button class="btn-upload">open (.wf)</button>
+                <input type="file" id="file-upload" accept=".wf,.txt" py-change="load_file">
+            </div>
+            <button class="btn-fire" py-click="run_code">Fire</button>
+        </div>
+    </div>
+
+    <div class="output-header">OUTPUT</div>
+    <pre id="output"></pre>
+</div>
+
+<footer>
+    <div class="footer-content">
+        <a href="https://github.com/wf-lang/WildFire" target="_blank" class="github-card">
+            <svg height="40" viewBox="0 0 16 16" width="40"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            <span>wf-lang/WildFire</span>
+        </a>
+        <p class="info-text">
+A purely ephemeral 2D Esolang. Execution burns your code, forcing Plant-Driven Development (PDD) and extreme eco-friendly compliance.
+        </p>
+    </div>
+</footer>
+
 <script type="py">
-from pyscript import document
+from pyscript import document, window
+import asyncio
 
 def exec(src):
     grid = []
@@ -113,6 +377,13 @@ def run_code(event):
         output_element.innerText = out + err
     else:
         output_element.innerText = out
+
+async def load_file(event):
+    file_list = event.target.files
+    if len(file_list) > 0:
+        file = file_list.item(0)
+        text = await file.text()
+        document.getElementById("code").value = text
 </script>
 </body>
 </html>
